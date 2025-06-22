@@ -32,7 +32,12 @@ app.get('/api/hello', function(req, res) {
 
 app.post('/api/shorturl',async(req,res)=>{
   const originalUrl= req.body.url;
-  const hostname=urlParser.parse(originalUrl).hostname;
+  let hostname;
+  try {
+    hostname = new URL(originalUrl).hostname;
+  } catch {
+    return res.json({ error: 'invalid url' });
+  }
   dns.lookup(hostname,async(err)=>{
     if (err) return res.json({ error: 'invalid url' });
     let existing= await url.findOne({original_url : originalUrl});
@@ -44,7 +49,7 @@ app.post('/api/shorturl',async(req,res)=>{
   });
 });
 app.get('/api/shorturl/:short',async(req,res)=>{
-  const urlEntry=await url.findOne({short_url : req.params.short});
+  const urlEntry=await url.findOne({short_url : Number(req.params.short)});
   if(!urlEntry) return res.json({error : 'No short URL found'});
   res.redirect(urlEntry.original_url);
 });
