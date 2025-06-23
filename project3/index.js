@@ -19,7 +19,6 @@ const urlSchema= mongoose.Schema({
 });
 const url=new mongoose.model("url",urlSchema);
 app.use(express.urlencoded({ extended: false }));
-let counter=1;
 
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
@@ -42,10 +41,13 @@ app.post('/api/shorturl',async(req,res)=>{
     if (err) return res.json({ error: 'invalid url' });
     let existing= await url.findOne({original_url : originalUrl});
     if(existing) return res.json(existing);
-    const newUrl=new url({original_url : originalUrl,short_url: counter});
-    counter++;
+    const lastEntry = await url.findOne().sort('-short_url').exec();
+    const nextShort = lastEntry ? lastEntry.short_url + 1 : 1;
+
+    const newUrl=new url({original_url : originalUrl,short_url: nextShort});
     await newUrl.save();
     res.json(newUrl);
+
   });
 });
 app.get('/api/shorturl/:short',async(req,res)=>{
