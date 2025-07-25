@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import assets, { userDummyData } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/authContext'
@@ -10,12 +10,29 @@ const Sidebar = () => {
   const { logout, onlineUsers } = useContext(AuthContext);
   const [input, setInput] = useState(false);
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const filteredUsers = input ? users.filter((user) => user.fullName.toLowerCase().includes(input.toLowerCase())) : users;
 
   useEffect(() => {
     getUsers();
   }, [onlineUsers])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
 
   return (
     <div className={`bg-[#8185B2]/10 h-full p-5 rounded-r-xl overflow-y-scroll text-white ${selectedUser ? 'max-md:hidden' : ''}`}>
@@ -25,12 +42,12 @@ const Sidebar = () => {
             <img src="/favicon.svg" alt="" className='w-[40px] p-1 ml-1 md:w-[50px]' />
             <h1 className='text-white text-lg md:text-2xl mr-5 ml-2'>QuickMess</h1>
           </div>
-          <div className="relative py-2 group w-10">
+          <div ref={menuRef} onClick={() => setIsMobileMenuOpen(prev => !prev)} className="relative py-2 group w-10">
             <img src={assets.menu_icon} alt="Menu" className='max-h-5 cursor-pointer' />
-            <div className='absolute top-full right-0 z-20 w-32 p-5 cursor-pointer rounded-md bg-[#282142] border-gray-600 text-gray-100 hidden group-hover:block'>
-              <p onClick={() => navigate('/profile')}>Edit Profile</p>
+            <div className={`absolute top-full right-0 z-20 w-32 p-5 cursor-pointer rounded-md bg-[#282142] border-gray-600 text-gray-100 ${isMobileMenuOpen ? 'block' : 'hidden'} md:group-hover:block`}>
+              <p onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }}>Edit Profile</p>
               <hr className='my-2 border-t border-gray-500' />
-              <p onClick={() => logout()} className='cursor-pointer text-sm text-white'>Logout</p>
+              <p onClick={() => { logout(); setIsMobileMenuOpen(false); }} className='cursor-pointer text-sm text-white'>Logout</p>
             </div>
           </div>
         </div>
